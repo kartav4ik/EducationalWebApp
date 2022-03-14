@@ -1,56 +1,64 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EducationalWebApp.Data;
-using EducationalWebApp.Models;
-using EducationalWebApp.Models.DTO_s;
+﻿using AppDomain.Models;
+using AppDomain.Models.DTO_s;
+using Microsoft.AspNetCore.Mvc;
+using Service.Interfaces;
 
-namespace EducationalWebApp.Controllers
+namespace WebApi.Controllers
 {
 
     [Route("api/[controller]")]
     [ApiController]
-    public class OrderController: ControllerBase
+    public class OrderController : ControllerBase
     {
-        private readonly MyDBContext _context;
-        public OrderController(MyDBContext context)
+        private readonly IOrderService _orderService;
+
+        public OrderController(IOrderService orderService)
         {
-            _context = context;
+            _orderService = orderService;
         }
 
-        // GET: api/Order
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrders()
+        public async Task<ActionResult<GetAllOrderDTO>> GetOrders()
         {
-            return await _context
-                .Orders
-                .Select(o => new OrderDTO(o))
-                .ToListAsync();
+            var response = await _orderService.GetOrders();
+            var data = response.Data.Select(p => GetAllOrderDTO.New(p));
+            return Ok(data);
         }
 
-        // DELETE: api/Order/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<GetOneOrderDTO>> GetOrder(Guid id)
         {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
+            var response = await _orderService.GetOrder(id);
+            if (response.Data == null)
             {
                 return NotFound();
             }
-
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            var data = GetOneOrderDTO.New(response.Data);
+            return Ok(data);
         }
+
+        [HttpPost]
+        public async Task<ActionResult<NewOrderDTO>> AddOrder(Order newOrder)
+        {
+            var response = await _orderService.AddOrder(newOrder);
+            var data = NewOrderDTO.New(response.Data);
+            return Ok(data);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditOrder(Guid id, Order updOrder)
+        {
+            var response = await _orderService.EditOrder(id, updOrder);
+
+            return Ok(response);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProduct(Guid id)
+        {
+            var response = await _orderService.DeleteOrder(id);
+            return Ok(response);
+        }
+
     }
 }
-//1. add git repo
-//2. 2 controllera
-//3. Linq sql
-//4. sql-ex
-
-/* дописать по-человечески продукт контроллер, в частности методы POST PUT 
- * дописать post put в двух контроллерах
- *
- *
- */

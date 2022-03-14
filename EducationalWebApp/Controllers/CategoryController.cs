@@ -1,46 +1,63 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using EducationalWebApp.Data;
-using EducationalWebApp.Models;
-using EducationalWebApp.Models.DTO_s;
+﻿using AppDomain.Models;
+using AppDomain.Models.DTO_s;
+using Microsoft.AspNetCore.Mvc;
+using Service.Interfaces;
 
-
-namespace EducationalWebApp.Controllers
+namespace WebApi.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoryController: ControllerBase
+    public class CategoryController : ControllerBase
     {
-        private readonly MyDBContext _context;
-        public CategoryController(MyDBContext context)
+        private readonly ICategoryService _categoryService;
+
+        public CategoryController(ICategoryService categoryService)
         {
-            _context = context;
+            _categoryService = categoryService;
         }
 
-        // GET: api/Category
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<CategoryDTO>>> GetCategory()
+        public async Task<ActionResult<GetAllCategoryDTO>> GetCategories()
         {
-            return await _context
-                .Category
-                .Select(c => new CategoryDTO(c))
-                .ToListAsync();
+            var response = await _categoryService.GetCategories();
+            var data = response.Data.Select(p => GetAllCategoryDTO.New(p));
+            return Ok(data);
         }
 
-        // DELETE: api/Category/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<GetOneCategoryDTO>> GetCategory(Guid id)
         {
-            var category = await _context.Category.FindAsync(id);
-            if (category == null)
+            var response = await _categoryService.GetCategory(id);
+            if (response.Data == null)
             {
                 return NotFound();
             }
+            var data = GetOneCategoryDTO.New(response.Data);
+            return Ok(data);
+        }
 
-            _context.Category.Remove(category);
-            await _context.SaveChangesAsync();
+        [HttpPost]
+        public async Task<ActionResult<NewCategoryDTO>> AddCategory(Category newCategory)
+        {
+            var response = await _categoryService.AddCategory(newCategory);
+            var data = NewCategoryDTO.New(response.Data);
+            return Ok(data);
+        }
 
-            return NoContent();
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditCategory(Guid id, Category updCategory)
+        {
+            var response = await _categoryService.EditCategory(id, updCategory);
+
+            return Ok(response);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProduct(Guid id)
+        {
+            var response = await _categoryService.DeleteCategory(id);
+            return Ok(response);
         }
 
     }

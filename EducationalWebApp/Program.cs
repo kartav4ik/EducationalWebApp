@@ -1,5 +1,9 @@
-using EducationalWebApp.Data;
+using DataAccess;
+using DataAccess.Interfaces;
+using DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Service.Implementations;
+using Service.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,10 +14,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddDbContext<MyDBContext>(options =>
+builder.Services.AddDbContext<ApplicationContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("EFConnection"));
 });
+#region Repositories
+
+//builder.Services.AddTransient(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+builder.Services.AddTransient<IProductRepository, ProductRepository>();
+builder.Services.AddTransient<ICategoryRepository, CategoryRepository>();
+builder.Services.AddTransient<IOrderRepository, OrderRepository>();
+
+#endregion
+
+#region Services
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+#endregion
 
 var app = builder.Build();
 
@@ -24,6 +42,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
@@ -31,3 +50,8 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+/*
+ * 1. middleware
+ * 2. async await
+ */
